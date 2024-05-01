@@ -5,3 +5,10 @@ test
 
 # VSCode Directory
 .vscode
+
+# Rust-related files
+debug/
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb

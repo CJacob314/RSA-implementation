@@ -9,12 +9,18 @@
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
+#include "rust/cxx.h"
 #include <atomic> // For multithreading
 #include <climits>
+#include <filesystem>
+#include <fstream>
 #include <future> // For multithreading
-#include <mutex>  // For multithreading
+#include <iostream>
+#include <memory>
+#include <mutex> // For multithreading
 #include <optional>
 #include <sstream>
+#include <streambuf>
 #include <string>
 #include <sys/random.h> // For cryptographically secure random numbers
 #include <thread>       // For multithreading
@@ -46,20 +52,16 @@ private:
                                 // since I always use e = 2^16 - 1.
   uint16_t pubKeyBytes, pubKeyBits;
 
-  RSA(){}; // Empty constructor private only for use only in static
-           // builder-style "constructor" and in static RSA::emptyRSA() method
-           // (to be used for comparisons)
-
   bool rabinMillerIsPrime(const BigInt &n, uint64_t accuracy);
   bool __rabinMillerHelper(BigInt d, BigInt n);
   void generatePrime(uint16_t keyLength);
 
-  std::string toAsciiStr(BigInt n);
-  BigInt fromAsciiStr(const std::string &str);
+  std::string toAsciiStr(BigInt n) const;
+  BigInt fromAsciiStr(const std::string &str) const;
 
-  std::string toAsciiCompressedStr(const BigInt &n);
-  std::string toAsciiCompressedStr(const uint8_t *, size_t);
-  BigInt fromAsciiCompressedStr(const std::string &ascii);
+  std::string toAsciiCompressedStr(const BigInt &n) const;
+  std::string toAsciiCompressedStr(const uint8_t *, size_t) const;
+  BigInt fromAsciiCompressedStr(const std::string &ascii) const;
 
   const BigInt e = BigInt(1) << 16 | 0x1;
 
@@ -77,6 +79,8 @@ private:
   };
 
 public:
+  RSA(){}; // Empty constructor. Will NOT encrypt or decrypt anything
+
   RSA(uint16_t newKeyLength);
   RSA(RsaKey privateKey, RsaKey publicKey);
   RSA(RsaKey publicKey);
@@ -91,28 +95,50 @@ public:
   // ! operator will return true if and only if the RSA object is invalid/empty
   bool operator!();
 
-  std::string encrypt(const std::string &message,
-                      bool compressedAsciiOutput = false);
-  std::string decrypt(const std::string &message,
-                      bool compressedAsciiInput = false);
-  std::string sign(const std::string &message);
-  bool verify(const std::string &signedMessage);
-  std::string getFingerprint();
-  bool testKey(void); // Returns true iff the private key was able to decrypt 64
-                      // random bytes the public key encrypted.
+  std::unique_ptr<std::string>
+  encrypt(const std::string &message, bool compressedAsciiOutput = false) const;
 
-  bool exportToFile(const char *filepath, bool exportPrivateKey = false,
-                    bool forWebVersion = false);
-  bool importFromFile(const char *filepath, bool importPrivateKey = false);
+  std::unique_ptr<std::string> decrypt(const std::string &message,
+                                       bool compressedAsciiInput = false) const;
+  std::unique_ptr<std::string> sign(const std::string &message) const;
+  bool verify(const std::string &signedMessage) const;
+  std::unique_ptr<std::string> getFingerprint() const;
+  bool testKey(void) const; // Returns true iff the private key was able to
+                            // decrypt 64 random bytes the public key encrypted.
+
+  bool exportToFile(const std::string &, bool exportPrivateKey = false,
+                    bool forWebVersion = false) const;
+  bool importFromFile(const std::string &, bool importPrivateKey = false);
   bool importFromString(const std::string &s, bool importPrivateKey = false);
 
-  RsaKey getPrivateKey();
-  RsaKey getPublicKey();
-  uint64_t getPublicKeyLength();
+  RsaKey getPrivateKey() const;
+  RsaKey getPublicKey() const;
+  uint64_t getPublicKeyLength() const;
 
+  static std::unique_ptr<RSA> empty_uptr();
+
+  // Additional class methods to interface with Rust (cxx makes passing strings
+  // a real pain)
+  std::unique_ptr<std::string>
+  encrypt_wrapper(const rust::Str message, bool compressedAsciiOutput) const;
+  std::unique_ptr<std::string> decrypt_wrapper(const rust::Str message,
+                                               bool compressedAsciiInput) const;
+  std::unique_ptr<std::string> sign_wrapper(const rust::Str message) const;
+  bool verify_wrapper(const rust::Str signedMessage) const;
+  std::unique_ptr<std::string> getFingerprint_wrapper() const;
+  bool exportToFile_wrapper(const rust::Str filepath, bool exportPrivateKey,
+                            bool forWebVersion) const;
+  bool importFromFile_wrapper(const rust::Str filepath, bool importPrivateKey);
+  bool importFromString_wrapper(const rust::Str s, bool importPrivateKey);
 #ifdef DEBUG_TESTING
   void testPrimeDetection(BigInt n);
 #endif
 };
 
+// new_rsa(bits: u16) -> UniquePtr<RSA>
+std::unique_ptr<RSA> new_rsa(uint16_t bits);
+
+std::unique_ptr<RSA> buildFromKeyFile(const rust::Str filepath,
+                                      bool importPrivateKey = false,
+                                      bool fromWebVersion = false);
 #endif
