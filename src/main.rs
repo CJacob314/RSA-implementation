@@ -45,6 +45,7 @@ mod ffi {
             importPrivateKey: bool,
             fromWebVersion: bool,
         ) -> UniquePtr<RSA>;
+        fn getPublicKeyBitCnt(self: &RSA) -> u16;
     }
 }
 
@@ -71,6 +72,8 @@ enum Command {
     Sign(SignArgs),
     /// Verifies a signature of a file or stdin.
     Verify(VerifyArgs),
+    /// Print out the size and fingerprint of a key
+    Info(InfoArgs),
     /// Generate shell autocompletions
     Completions {
         /// The shell for which to generate the completion script.
@@ -110,6 +113,15 @@ struct EncryptArgs {
     /// Disable base64-like encoding of encrypted output (not recommended).
     #[arg(long)]
     uncompressed_output: bool,
+}
+
+#[derive(Debug, Args)]
+struct InfoArgs {
+    /// Path to the public key (or keypair) file to analyze.
+    key: String,
+    /// Whether or not to import the key from a web (rsa.jacobcohen.dev) file.
+    #[arg(short = 'w', long)]
+    from_web: bool,
 }
 
 #[derive(Debug, Args)]
@@ -270,6 +282,21 @@ fn main() {
             } else {
                 println!("\033[1;31mMessage unable to be verified with given public key!\033[0m");
             }
+        }
+        Command::Info(InfoArgs { key, from_web }) => {
+            let rsa = import_key_from_file(&key, false, from_web);
+            let pub_key_len = rsa.getPublicKeyLength();
+            let len_digits = (pub_key_len as f64).log10().ceil();
+            println!(
+                "{0: ^20} | {1: >2$}",
+                "Fingerprint", "Size", len_digits as usize
+            );
+            println!(
+                "{0: <20} | {1: >2$}",
+                rsa.getFingerprint_wrapper(),
+                pub_key_len,
+                len_digits as usize
+            );
         }
         Command::Completions { shell } => {
             let shell = shell.as_str();

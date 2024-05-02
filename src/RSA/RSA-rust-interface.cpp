@@ -95,7 +95,7 @@ std::unique_ptr<RSA> buildFromKeyFile(const rust::Str filepath_str,
     try {
       rsa->importFromString(fcontents, importPrivateKey);
     } catch (const std::runtime_error &e) {
-      std::cerr << "Caught exception while creating RSA object from keyfile\""
+      std::cerr << "Caught exception while creating RSA object from keyfile \""
                 << filepath << "\": " << e.what() << std::endl;
       return NULL;
     }
@@ -108,3 +108,5 @@ std::unique_ptr<RSA> RSA::empty_uptr() { return std::make_unique<RSA>(); }
 std::unique_ptr<RSA> new_rsa(uint16_t bits) {
   return std::make_unique<RSA>(bits);
 }
+
+uint16_t RSA::getPublicKeyBitCnt() const { return this->pubKeyBits; }

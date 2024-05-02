@@ -130,6 +130,8 @@ public:
                             bool forWebVersion) const;
   bool importFromFile_wrapper(const rust::Str filepath, bool importPrivateKey);
   bool importFromString_wrapper(const rust::Str s, bool importPrivateKey);
+  uint16_t getPublicKeyBitCnt() const;
+
 #ifdef DEBUG_TESTING
   void testPrimeDetection(BigInt n);
 #endif
