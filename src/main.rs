@@ -74,7 +74,7 @@ enum Command {
     Verify(VerifyArgs),
     /// Print out the size and fingerprint of a key
     Info(InfoArgs),
-    /// Generate shell autocompletions
+    /// Generate shell autocompletions (possible options are bash, zsh, and fish)
     Completions {
         /// The shell for which to generate the completion script.
         shell: String,
@@ -127,14 +127,12 @@ struct InfoArgs {
 #[derive(Debug, Args)]
 struct DecryptArgs {
     /// Path to the private key file used for decryption.
-    #[arg(short, long)]
     key: String,
 
     /// Path to the encrypted file to decrypt or "-" to read from stdin.
-    #[arg(short, long)]
     input: String,
 
-    /// Path to save the decrypted file.
+    /// Path to save the decrypted file (defaults to stdout).
     #[arg(short, long)]
     output: Option<String>,
 
@@ -226,7 +224,8 @@ fn main() {
         }) => {
             let rsa = import_key_from_file(&key, true, from_web);
             let data = read_data(&input);
-            let decrypted = rsa.decrypt_wrapper(data.as_str(), !uncompressed_input);
+
+            let decrypted = rsa.decrypt_wrapper(data.trim_matches('\n'), !uncompressed_input);
             match output {
                 None => {
                     println!("{}", decrypted);
