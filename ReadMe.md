@@ -12,5 +12,4 @@ This branch is a polished [clap](https://docs.rs/clap/latest/clap/) CLI interfac
 # Installing Binaries
 ###### *Please note*: Directly installing binaries is currently *only supported* on x86-64 GNU/Linux, and uses the Rust crate [cargo-dist](https://crates.io/crates/cargo-dist) to generate the installer shell script.
 
-To view installation commands, just visit the [releases page](../../releases).
-
+To view installation commands, just visit the [releases page](../../releases). The installation commands require `tar`, `curl`, `sh`, and `xz`.
