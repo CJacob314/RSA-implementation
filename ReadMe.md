@@ -8,3 +8,9 @@ This branch is a polished [clap](https://docs.rs/clap/latest/clap/) CLI interfac
 3. Clone this repository, `cd` into the directory, and run `cargo build --release`
 - **Note**: If you have your `boost` libraries installed somewhere that isn't `/usr/lib/something`, you should run `BOOST_LIB_PATH='/path/to/your/boost/libraries' cargo build --release` instead.
 4. If it builds successfully, your `rsa_tool` binary should be available in `repo_directory/target/release/rsa_tool`.
+
+# Installing Binaries
+###### *Please note*: Directly installing binaries is currently *only supported* on x86-64 GNU/Linux, and uses the Rust crate [cargo-dist](https://crates.io/crates/cargo-dist) to generate the installer shell script.
+
+To view installation commands, just visit the [releases page](../../releases).
+
